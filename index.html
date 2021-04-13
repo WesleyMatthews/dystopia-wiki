@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>Dystopia Wiki</title>
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css">
+  <link rel="stylesheet" href="style.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="app">
+    <v-app>
+      <v-app-bar app clipped-left>
+        <v-app-bar-nav-icon
+          class="d-md-none"
+          @click="showNavigation = true"
+        ></v-app-bar-nav-icon>
+        <v-toolbar-title>Dystopia Wiki</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn
+          v-if="canEdit && page"
+          @click="isEditingPage ? downloadPage() : (isEditingPage = true)"
+          :color="isEditingPage ? 'success' : 'primary'"
+          elevation="2"
+        >
+          <v-icon left>mdi-{{ isEditingPage ? 'download' : 'pencil' }}</v-icon>
+          {{ isEditingPage ? 'Download' : 'Edit' }}
+        </v-btn>
+        <v-btn
+          v-if="canEdit && page"
+          v-show="isEditingPage"
+          @click="uploadPageDialog = true"
+          color="primary"
+          elevation="2"
+          class="ml-4"
+        >
+          <v-icon left>mdi-upload</v-icon>
+          Upload
+        </v-btn>
+        <v-btn
+          v-if="canEdit && page"
+          v-show="isEditingPage"
+          @click="cancelEditingPage"
+          color="error"
+          elevation="2"
+          class="ml-4"
+        >
+          <v-icon left>mdi-close</v-icon>
+          Cancel
+        </v-btn>
+      </v-app-bar>
+      <v-navigation-drawer app clipped v-model="showNavigation">
+        <v-list dense nav>
+          <template v-for="(link, i) in navigationLinks">
+            <v-list-group
+              v-if="link.children"
+              :key="i"
+              v-model="link.active"
+              no-action
+            >
+              <template v-slot:activator>
+                <v-list-item-content>
+                  <v-list-item-title v-text="link.label"></v-list-item-title>
+                </v-list-item-content>
+              </template>
+              <v-list-item
+                v-for="(child, j) in link.children"
+                :key="j"
+                :href="child.href"
+                class="pl-8"
+              >
+                <v-list-item-content>
+                  <v-list-item-title v-text="child.label"></v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list-group>
+            <v-list-item v-else :key="i" :href="link.href">
+              <v-list-item-content>
+                <v-list-item-title v-text="link.label"></v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </template>
+          <v-list-item v-if="canEdit" href="./?new">
+            <v-list-item-content>
+              <v-list-item-title>New Page</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-navigation-drawer>
+      <v-main>
+        <template v-if="pageLoaded && page">
+          <div class="pa-4">
+            <v-dialog v-model="uploadPageDialog" max-width="300">
+              <v-card>
+                <v-card-title class="pa-4">
+                  <span class="mx-auto">Upload A Page From JSON</span>
+                </v-card-title>
+                <v-card-text>
+                  <v-form v-model="uploadPageValid" @submit.prevent>
+                    <v-file-input
+                      v-model="pageToUpload"
+                      accept=".json"
+                      label="Page"
+                      :rules="uploadPageRules"
+                      required
+                    ></v-file-input>
+                  </v-form>
+                </v-card-text>
+                <v-card-actions class="px-4 pt-0 pb-4">
+                  <v-spacer></v-spacer>
+                  <v-btn color="error" text @click="uploadPageDialog = false">
+                    Cancel
+                  </v-btn>
+                  <v-btn color="primary" text @click="uploadPage" :disabled="!uploadPageValid">
+                    Upload
+                  </v-btn>
+                  <v-spacer></v-spacer>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+            <v-row no-gutters align="center">
+              <v-btn
+                v-if="canEdit"
+                v-show="isEditingPage"
+                color="primary"
+                icon
+                @click="editPageTitle"
+                class="mr-2"
+              >
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+              <h1 v-text="page.title" class="d-flex"></h1>
+            </v-row>
+            <v-dialog v-model="pageTitleDialog" max-width="300">
+              <v-card>
+                <v-card-title class="pa-4">
+                  <span class="mx-auto">Edit Page Title</span>
+                </v-card-title>
+                <v-card-text>
+                  <v-form v-model="pageTitleValid" @submit.prevent>
+                    <v-text-field
+                      v-model="newPageTitle"
+                      label="Title"
+                      required
+                      :rules="textRules"
+                    ></v-text-field>
+                  </v-form>
+                </v-card-text>
+                <v-card-actions class="px-4 pt-0 pb-4">
+                  <v-spacer></v-spacer>
+                  <v-btn color="error" text @click="pageTitleDialog = false">
+                    Cancel
+                  </v-btn>
+                  <v-btn
+                    color="success"
+                    text
+                    @click="savePageTitle"
+                    :disabled="!pageTitleValid"
+                  >
+                    Save
+                  </v-btn>
+                  <v-spacer></v-spacer>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+            <template v-for="(section, i) in page.sections">
+              <v-row :key="i" no-gutters>
+                <v-btn
+                  v-if="canEdit"
+                  v-show="isEditingPage"
+                  color="primary"
+                  icon
+                  @click="section.type === 'text' ? editSectionText(i) : editSectionImage(i)"
+                  class="mr-2 mb-2 mb-md-0"
+                >
+                  <v-icon>mdi-pencil</v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="canEdit"
+                  v-show="isEditingPage"
+                  color="primary"
+                  icon
+                  @click="section.type === 'text' ? deleteSectionText(i) : deleteSectionImage(i)"
+                  class="mr-2 mb-2 mb-md-0"
+                >
+                  <v-icon>mdi-close</v-icon>
+                </v-btn>
+                <div v-if="section.type === 'text'" class="mb-4 text">
+                  <pre v-text="section.content"></pre>
+                </div>
+                <img
+                  v-if="section.type === 'image'"
+                  :src="section.content"
+                  class="mb-4 image"
+                >
+              </v-row>
+            </template>
+            <div v-if="canEdit" v-show="isEditingPage" class="text-center">
+              <v-btn
+                @click="isEditingText = false; addTextDialog = true"
+                icon
+                color="primary"
+                class="mr-4"
+              >
+                <v-icon>mdi-playlist-plus</v-icon>
+              </v-btn>
+              <v-btn
+                @click="addImageDialog = true"
+                icon
+                color="primary"
+              >
+                <v-icon>mdi-image-plus</v-icon>
+              </v-btn>
+            </div>
+            <v-dialog v-model="addTextDialog" max-width="300">
+              <v-card>
+                <v-card-title class="pa-4">
+                  <span class="mx-auto">{{ isEditingText ? 'Edit' : 'Add' }} Text</span>
+                </v-card-title>
+                <v-card-text>
+                  <v-form v-model="addTextValid" @submit.prevent>
+                    <v-textarea
+                      v-model="textToAdd"
+                      label="Text"
+                      required
+                      :rules="textRules"
+                      rows="4"
+                      no-resize
+                    ></v-textarea>
+                  </v-form>
+                </v-card-text>
+                <v-card-actions class="px-4 pt-0 pb-4">
+                  <v-spacer></v-spacer>
+                  <v-btn color="error" text @click="addTextDialog = false">
+                    Cancel
+                  </v-btn>
+                  <v-btn
+                    color="success"
+                    text
+                    @click="isEditingText ? editText() : addText()"
+                    :disabled="!addTextValid"
+                  >{{ isEditingText ? 'Edit' : 'Add' }}</v-btn>
+                  <v-spacer></v-spacer>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+            <v-dialog v-model="addImageDialog" max-width="300">
+              <v-card>
+                <v-card-title class="pa-4">
+                  <span class="mx-auto">{{ isEditingImage ? 'Edit' : 'Add' }} Image</span>
+                </v-card-title>
+                <v-card-text>
+                  <v-form v-model="addImageValid" @submit.prevent>
+                    <v-file-input
+                      v-model="imageToAdd"
+                      accept=".png,.jpg,.jpeg"
+                      label="Image"
+                      :rules="uploadImageRules"
+                      required
+                    ></v-file-input>
+                  </v-form>
+                </v-card-text>
+                <v-card-actions class="px-4 pt-0 pb-4">
+                  <v-spacer></v-spacer>
+                  <v-btn color="error" text @click="addImageDialog = false">
+                    Cancel
+                  </v-btn>
+                  <v-btn
+                    color="success"
+                    text
+                    @click="isEditingImage ? editImage() : addImage()"
+                    :disabled="!addImageValid"
+                  >{{ isEditingImage ? 'Edit' : 'Add' }}</v-btn>
+                  <v-spacer></v-spacer>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+            <v-dialog v-model="deleteTextDialog" max-width="300">
+              <v-card>
+                <v-card-title class="pa-4">
+                  <span class="mx-auto">Delete Text</span>
+                </v-card-title>
+                <v-card-text>
+                  <p>Are you sure you want to delete this text?</p>
+                </v-card-text>
+                <v-card-actions class="px-4 pt-0 pb-4">
+                  <v-spacer></v-spacer>
+                  <v-btn color="error" text @click="deleteTextDialog = false">
+                    Cancel
+                  </v-btn>
+                  <v-btn
+                    color="success"
+                    text
+                    @click="confirmDeleteText"
+                  >Delete</v-btn>
+                  <v-spacer></v-spacer>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+            <v-dialog v-model="deleteImageDialog" max-width="300">
+              <v-card>
+                <v-card-title class="pa-4">
+                  <span class="mx-auto">Delete Image</span>
+                </v-card-title>
+                <v-card-text>
+                  <p>Are you sure you want to delete this image?</p>
+                </v-card-text>
+                <v-card-actions class="px-4 pt-0 pb-4">
+                  <v-spacer></v-spacer>
+                  <v-btn color="error" text @click="deleteImageDialog = false">
+                    Cancel
+                  </v-btn>
+                  <v-btn
+                    color="success"
+                    text
+                    @click="confirmDeleteImage"
+                  >Delete</v-btn>
+                  <v-spacer></v-spacer>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+          </div>
+        </template>
+        <template v-if="pageLoaded && !page">
+          <v-row no-gutters justify="center" align="center" class="full-height pa-4 flex-column">
+            <h2 class="text-center text-h1 mb-4">Error 404</h2>
+            <p class="text-center">When the Earth broke apart, this page went flying into outerspace.</p>
+            <p class="text-center mb-0"><a href="./">Go back in time.</a></p>
+          </v-row>
+        </template>
+        <template v-if="!pageLoaded">
+          <v-row no-gutters justify="center" align="center" class="full-height">
+            <v-progress-circular
+              indeterminate
+              color="primary"
+            ></v-progress-circular>
+          </v-row>
+        </template>
+      </v-main>
+    </v-app>
+  </div>
+  
+  <script src="vue-config.js"></script>
+</body>
+</html>
