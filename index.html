@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
-  <title>Dystopia Wiki</title>
+  <title>Fractured by Time</title>
   
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css">
@@ -22,7 +22,7 @@
           class="d-md-none"
           @click="showNavigation = true"
         ></v-app-bar-nav-icon>
-        <v-toolbar-title>Dystopia Wiki</v-toolbar-title>
+        <v-toolbar-title>Fractured by Time</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn
           v-if="canEdit && page"
@@ -70,16 +70,42 @@
                   <v-list-item-title v-text="link.label"></v-list-item-title>
                 </v-list-item-content>
               </template>
-              <v-list-item
-                v-for="(child, j) in link.children"
-                :key="j"
-                :href="child.href"
-                class="pl-8"
-              >
-                <v-list-item-content>
-                  <v-list-item-title v-text="child.label"></v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
+              <template v-for="(child, j) in link.children">
+                <v-list-group
+                  v-if="child.children"
+                  :key="j"
+                  v-model="child.active"
+                  no-action
+                  multiple
+                  sub-group
+                >
+                  <template v-slot:activator>
+                    <v-list-item-content>
+                      <v-list-item-title v-text="child.label"></v-list-item-title>
+                    </v-list-item-content>
+                  </template>
+                  <v-list-item
+                    v-for="(child2, k) in child.children"
+                    :key="k"
+                    :href="child2.href"
+                    class="pl-16"
+                  >
+                    <v-list-item-content>
+                      <v-list-item-title v-text="child2.label"></v-list-item-title>
+                    </v-list-item-content>
+                  </v-list-item>
+                </v-list-group>
+                <v-list-item
+                  v-else
+                  :key="j"
+                  :href="child.href"
+                  class="pl-8"
+                >
+                  <v-list-item-content>
+                    <v-list-item-title v-text="child.label"></v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </template>
             </v-list-group>
             <v-list-item v-else :key="i" :href="link.href">
               <v-list-item-content>
@@ -125,19 +151,6 @@
                 </v-card-actions>
               </v-card>
             </v-dialog>
-            <v-row no-gutters align="center">
-              <v-btn
-                v-if="canEdit"
-                v-show="isEditingPage"
-                color="primary"
-                icon
-                @click="editPageTitle"
-                class="mr-2"
-              >
-                <v-icon>mdi-pencil</v-icon>
-              </v-btn>
-              <h1 v-text="page.title" class="d-flex"></h1>
-            </v-row>
             <v-dialog v-model="pageTitleDialog" max-width="300">
               <v-card>
                 <v-card-title class="pa-4">
@@ -170,38 +183,85 @@
                 </v-card-actions>
               </v-card>
             </v-dialog>
-            <template v-for="(section, i) in page.sections">
-              <v-row :key="i" no-gutters>
-                <v-btn
-                  v-if="canEdit"
-                  v-show="isEditingPage"
-                  color="primary"
-                  icon
-                  @click="section.type === 'text' ? editSectionText(i) : editSectionImage(i)"
-                  class="mr-2 mb-2 mb-md-0"
-                >
-                  <v-icon>mdi-pencil</v-icon>
-                </v-btn>
-                <v-btn
-                  v-if="canEdit"
-                  v-show="isEditingPage"
-                  color="primary"
-                  icon
-                  @click="section.type === 'text' ? deleteSectionText(i) : deleteSectionImage(i)"
-                  class="mr-2 mb-2 mb-md-0"
-                >
-                  <v-icon>mdi-close</v-icon>
-                </v-btn>
-                <div v-if="section.type === 'text'" class="mb-4 text">
-                  <pre v-text="section.content"></pre>
-                </div>
-                <img
-                  v-if="section.type === 'image'"
-                  :src="section.content"
-                  class="mb-4 image"
-                >
-              </v-row>
-            </template>
+            <v-row no-gutters align="center" class="mb-2">
+              <v-btn
+                v-if="canEdit"
+                v-show="isEditingPage"
+                color="primary"
+                icon
+                @click="editPageTitle"
+                class="mr-2"
+              >
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+              <h1 v-text="page.title" class="d-flex"></h1>
+            </v-row>
+            <v-row class="ma-n2">
+              <v-col cols="12" :md="page.character ? 9 : 12" class="pa-2">
+                <template v-for="(section, i) in page.sections">
+                  <v-row :key="i" no-gutters>
+                    <v-btn
+                      v-if="canEdit"
+                      v-show="isEditingPage"
+                      color="primary"
+                      icon
+                      @click="section.type === 'text' ? editSectionText(i) : editSectionImage(i)"
+                      class="mr-2 mb-2 mb-md-0"
+                    >
+                      <v-icon>mdi-pencil</v-icon>
+                    </v-btn>
+                    <v-btn
+                      v-if="canEdit"
+                      v-show="isEditingPage"
+                      color="primary"
+                      icon
+                      @click="section.type === 'text' ? deleteSectionText(i) : deleteSectionImage(i)"
+                      class="mr-2 mb-2 mb-md-0"
+                    >
+                      <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                    <div v-if="section.type === 'text'" class="mb-4 text">
+                      <pre v-html="section.content"></pre>
+                    </div>
+                    <img
+                      v-if="section.type === 'image'"
+                      :src="section.content"
+                      class="mb-4 image"
+                    >
+                  </v-row>
+                </template>
+              </v-col>
+              <v-col
+                cols="12"
+                md="3"
+                order="first"
+                order-md="last"
+                class="pa-2"
+                v-if="isCharacter"
+              >
+                <v-card>
+                  <img
+                    v-if="page.character.image"
+                    :src="page.character.image"
+                    class="image"
+                  >
+                  <v-card-title v-text="page.character.name"></v-card-title>
+                  <v-card-text>
+                    <p v-if="page.character.id">ID: {{ page.character.id }}</p>
+                    <p v-if="page.character.class">Class: {{ page.character.class }}</p>
+                    <p v-if="page.character.gender">Gender: {{ page.character.gender }}</p>
+                    <p v-if="page.character.status">Status: {{ page.character.status }}</p>
+                    <p v-if="page.character.occupation">Occupation: {{ page.character.occupation }}</p>
+                    <p v-if="page.character.affiliation" class="mb-0">Affiliation: {{ page.character.affiliation }}</p>
+                  </v-card-text>
+                  <v-card-actions class="px-4 pb-4 pt-0">
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" elevation="2" @click="editCharacterDetails">Edit</v-btn>
+                    <v-spacer></v-spacer>
+                  </v-card-actions>
+                </v-card>
+              </v-col>
+            </v-row>
             <div v-if="canEdit" v-show="isEditingPage" class="text-center">
               <v-btn
                 @click="isEditingText = false; addTextDialog = true"
@@ -215,11 +275,78 @@
                 @click="addImageDialog = true"
                 icon
                 color="primary"
+                class="mr-4"
               >
                 <v-icon>mdi-image-plus</v-icon>
               </v-btn>
+              <v-btn
+                @click="isCharacter ? removeCharacterDetails() : addCharacterDetails()"
+                icon
+                color="primary"
+              >
+                <v-icon>mdi-account-{{ isCharacter ? 'minus' : 'plus' }}</v-icon>
+              </v-btn>
             </div>
-            <v-dialog v-model="addTextDialog" max-width="300">
+            <v-dialog v-model="editCharacterDialog" max-width="500">
+              <v-card>
+                <v-card-title class="pa-4">
+                  <span class="mx-auto">Edit Character</span>
+                </v-card-title>
+                <v-card-text>
+                  <v-form v-model="editCharacterValid" @submit.prevent>
+                    <v-file-input
+                      v-model="characterImageToUpload"
+                      accept=".png,.jpg,.jpeg"
+                      label="Image"
+                      :rules="uploadCharacterImageRules"
+                      required
+                    ></v-file-input>
+                    <v-text-field
+                      v-model="characterEdit.name"
+                      label="Name"
+                    ></v-text-field>
+                    <v-text-field
+                      v-model="characterEdit.id"
+                      label="ID"
+                    ></v-text-field>
+                    <v-text-field
+                      v-model="characterEdit.class"
+                      label="Class"
+                    ></v-text-field>
+                    <v-text-field
+                      v-model="characterEdit.gender"
+                      label="Gender"
+                    ></v-text-field>
+                    <v-text-field
+                      v-model="characterEdit.status"
+                      label="Status"
+                    ></v-text-field>
+                    <v-text-field
+                      v-model="characterEdit.occupation"
+                      label="Occupation"
+                    ></v-text-field>
+                    <v-text-field
+                      v-model="characterEdit.affiliation"
+                      label="Affiliation"
+                    ></v-text-field>
+                  </v-form>
+                </v-card-text>
+                <v-card-actions class="px-4 pt-0 pb-4">
+                  <v-spacer></v-spacer>
+                  <v-btn color="error" text @click="editCharacterDialog = false">
+                    Cancel
+                  </v-btn>
+                  <v-btn
+                    color="success"
+                    text
+                    @click="saveCharacterDetails"
+                    :disabled="!editCharacterValid"
+                  >Save</v-btn>
+                  <v-spacer></v-spacer>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+            <v-dialog v-model="addTextDialog" max-width="500">
               <v-card>
                 <v-card-title class="pa-4">
                   <span class="mx-auto">{{ isEditingText ? 'Edit' : 'Add' }} Text</span>
@@ -246,7 +373,7 @@
                     text
                     @click="isEditingText ? editText() : addText()"
                     :disabled="!addTextValid"
-                  >{{ isEditingText ? 'Edit' : 'Add' }}</v-btn>
+                  >{{ isEditingText ? 'Save' : 'Add' }}</v-btn>
                   <v-spacer></v-spacer>
                 </v-card-actions>
               </v-card>
@@ -277,7 +404,7 @@
                     text
                     @click="isEditingImage ? editImage() : addImage()"
                     :disabled="!addImageValid"
-                  >{{ isEditingImage ? 'Edit' : 'Add' }}</v-btn>
+                  >{{ isEditingImage ? 'Save' : 'Add' }}</v-btn>
                   <v-spacer></v-spacer>
                 </v-card-actions>
               </v-card>

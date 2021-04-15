@@ -11,19 +11,62 @@ new Vue({
         href: './',
       },
       {
-        label: 'Example Page',
-        href: './?page=example',
-      },
-      {
-        label: 'Error 404 Page',
-        href: './?page=',
-      },
-      {
-        label: 'Container',
+        label: 'Characters',
         children: [
           {
-            label: 'Link',
-            href: './?page=',
+            label: 'Revolutionaries',
+            children: [
+              {
+                label: 'Bean',
+                href: './?page=bean',
+              },
+              {
+                label: 'Chilli',
+                href: './?page=chilli',
+              },
+              {
+                label: 'Tomato',
+                href: './?page=tomato',
+              },
+              {
+                label: 'French Fry',
+                href: './?page=frenchfry',
+              },
+            ],
+          },
+          {
+            label: 'Traditionalists',
+            children: [
+              {
+                label: 'Roger',
+                href: './?page=roger',
+              },
+              {
+                label: 'Joanne',
+                href: './?page=joanne',
+              },
+              {
+                label: 'Harper',
+                href: './?page=tomato',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        label: 'World',
+        children: [
+          {
+            label: 'WISDOM',
+            href: './?page=wisdom',
+          },
+          {
+            label: 'Class Structure',
+            href: './?page=classstructure',
+          },
+          {
+            label: 'Timeline',
+            href: './?page=timeline',
           },
         ],
       },
@@ -62,6 +105,14 @@ new Vue({
       v => !v || v.size < 10000000 || 'Less than 10 MB',
     ],
     deleteImageDialog: false,
+    isCharacter: false,
+    characterEdit: {},
+    editCharacterDialog: false,
+    editCharacterValid: false,
+    characterImageToUpload: null,
+    uploadCharacterImageRules: [
+      v => !v || v.size < 10000000 || 'Less than 10 MB',
+    ],
   }),
   async created() {
     const searchParams = new URLSearchParams(location.search.substring(1));
@@ -79,8 +130,8 @@ new Vue({
         
         if (this.page) {
           document.title = this.page.title !== 'Home' ?
-            `${this.page.title} | Dystopia Wiki`
-            : 'Dystopia Wiki';
+            `${this.page.title} | Fractured by Time`
+            : 'Fractured by Time';
         }
       } catch (error) {
         console.log(error);
@@ -110,8 +161,8 @@ new Vue({
         vue.uploadPageDialog = false;
         vue.page = JSON.parse(reader.result);
         document.title = vue.page.title !== 'Home' ?
-          `${vue.page.title} | Dystopia Wiki`
-          : 'Dystopia Wiki';
+          `${vue.page.title} | Fractured by Time`
+          : 'Fractured by Time';
       };
       reader.readAsText(this.pageToUpload);
     },
@@ -194,6 +245,41 @@ new Vue({
       this.page.sections.splice(this.sectionIndexToEdit, 1);
       this.sectionIndexToEdit = -1;
       this.deleteImageDialog = false;
+    },
+    addCharacterDetails() {
+      this.page.character = {
+        image: 'https://picsum.photos/id/11/500/300',
+        name: 'Character',
+        id: '1234567890',
+        class: 'Lower',
+        gender: 'Male',
+        status: 'Alive',
+        occupation: 'Janitor',
+        affiliation: 'Revolutionaries',
+      };
+      this.isCharacter = true;
+    },
+    editCharacterDetails() {
+      this.editCharacterDialog = true;
+      this.characterEdit = { ...this.page.character };
+    },
+    removeCharacterDetails() {
+      delete this.page.character;
+      this.isCharacter = false;
+    },
+    saveCharacterDetails() {
+      this.page.character = { ...this.characterEdit };
+      this.editCharacterDialog = false;
+      
+      if (this.characterImageToUpload) {
+        const reader = new FileReader();
+        const vue = this;
+        reader.onload = function() {
+          vue.page.character.image = reader.result;
+          vue.characterImageToUpload = null;
+        };
+        reader.readAsDataURL(this.characterImageToUpload);
+      }
     },
   },
 });
