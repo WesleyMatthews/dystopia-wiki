@@ -198,38 +198,78 @@
             </v-row>
             <v-row class="ma-n2">
               <v-col cols="12" :md="page.character ? 9 : 12" class="pa-2">
-                <template v-for="(section, i) in page.sections">
-                  <v-row :key="i" no-gutters>
-                    <v-btn
-                      v-if="canEdit"
-                      v-show="isEditingPage"
-                      color="primary"
-                      icon
-                      @click="section.type === 'text' ? editSectionText(i) : editSectionImage(i)"
-                      class="mr-2 mb-2 mb-md-0"
-                    >
-                      <v-icon>mdi-pencil</v-icon>
-                    </v-btn>
-                    <v-btn
-                      v-if="canEdit"
-                      v-show="isEditingPage"
-                      color="primary"
-                      icon
-                      @click="section.type === 'text' ? deleteSectionText(i) : deleteSectionImage(i)"
-                      class="mr-2 mb-2 mb-md-0"
-                    >
-                      <v-icon>mdi-close</v-icon>
-                    </v-btn>
-                    <div v-if="section.type === 'text'" class="mb-4 text">
-                      <pre v-html="section.content"></pre>
-                    </div>
-                    <img
-                      v-if="section.type === 'image'"
-                      :src="section.content"
-                      class="mb-4 image"
-                    >
-                  </v-row>
-                </template>
+                <div v-if="pageID !== 'timeline'">
+                  <template v-for="(section, i) in page.sections">
+                    <v-row :key="i" no-gutters>
+                      <v-btn
+                        v-if="canEdit"
+                        v-show="isEditingPage"
+                        color="primary"
+                        icon
+                        @click="section.type === 'text' ? editSectionText(i) : editSectionImage(i)"
+                        class="mr-2 mb-2 mb-md-0"
+                      >
+                        <v-icon>mdi-pencil</v-icon>
+                      </v-btn>
+                      <v-btn
+                        v-if="canEdit"
+                        v-show="isEditingPage"
+                        color="primary"
+                        icon
+                        @click="section.type === 'text' ? deleteSectionText(i) : deleteSectionImage(i)"
+                        class="mr-2 mb-2 mb-md-0"
+                      >
+                        <v-icon>mdi-close</v-icon>
+                      </v-btn>
+                      <div v-if="section.type === 'text'" class="mb-4 text">
+                        <pre v-html="section.content"></pre>
+                      </div>
+                      <img
+                        v-if="section.type === 'image'"
+                        :src="section.content"
+                        class="mb-4 image"
+                      >
+                    </v-row>
+                  </template>
+                </div>
+                <div v-else>
+                  <v-timeline align-top dense class="mb-4">
+                    <template v-for="(section, i) in page.sections">
+                      <v-timeline-item :key="i" right>
+                        <v-row :key="i" no-gutters>
+                          <v-btn
+                            v-if="canEdit"
+                            v-show="isEditingPage"
+                            color="primary"
+                            icon
+                            @click="section.type === 'text' ? editSectionText(i) : editSectionImage(i)"
+                            class="mr-2 mb-2 mb-md-0"
+                          >
+                            <v-icon>mdi-pencil</v-icon>
+                          </v-btn>
+                          <v-btn
+                            v-if="canEdit"
+                            v-show="isEditingPage"
+                            color="primary"
+                            icon
+                            @click="section.type === 'text' ? deleteSectionText(i) : deleteSectionImage(i)"
+                            class="mr-2 mb-2 mb-md-0"
+                          >
+                            <v-icon>mdi-close</v-icon>
+                          </v-btn>
+                          <div v-if="section.type === 'text'" class="mb-4 text">
+                            <pre v-html="section.content"></pre>
+                          </div>
+                          <img
+                            v-if="section.type === 'image'"
+                            :src="section.content"
+                            class="mb-4 image"
+                          >
+                        </v-row>
+                      </v-timeline-item>
+                    </v-timeline>
+                  </template>
+                </div>
               </v-col>
               <v-col
                 cols="12"
