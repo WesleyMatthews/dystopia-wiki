@@ -61,8 +61,8 @@ new Vue({
             href: './?page=wisdom',
           },
           {
-            label: 'Class Structure',
-            href: './?page=classstructure',
+            label: 'Class System',
+            href: './?page=classsystem',
           },
           {
             label: 'Timeline',
@@ -74,7 +74,7 @@ new Vue({
     pageID: '',
     page: null,
     pageLoaded: false,
-    canEdit: true, // Change to false when submitting project.
+    canEdit: false,
     isEditingPage: false,
     isNewPage: false,
     uploadPageDialog: false,
@@ -122,6 +122,7 @@ new Vue({
     this.pageID = this.pageID.replace(/[\.\/]/g, '');
     await this.loadPage();
     this.pageLoaded = true;
+    this.isCharacter = !!this.page.character;
   },
   methods: {
     async loadPage() {
@@ -255,7 +256,7 @@ new Vue({
         gender: 'Male',
         status: 'Alive',
         occupation: 'Janitor',
-        affiliation: 'Revolutionaries',
+        affiliation: 'Revolutionists',
       };
       this.isCharacter = true;
     },

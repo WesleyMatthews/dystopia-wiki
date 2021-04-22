@@ -280,11 +280,13 @@
                 v-if="isCharacter"
               >
                 <v-card>
-                  <img
-                    v-if="page.character.image"
-                    :src="page.character.image"
-                    class="image"
-                  >
+                  <v-row no-gutters justify="center">
+                    <img
+                      v-if="page.character.image"
+                      :src="page.character.image"
+                      class="image"
+                    >
+                  </v-row>
                   <v-card-title v-text="page.character.name"></v-card-title>
                   <v-card-text>
                     <p v-if="page.character.id">ID: {{ page.character.id }}</p>
